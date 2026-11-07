@@ -1,4 +1,44 @@
 {
   "versao": 1,
-  "veiculos": []
+  "veiculos": [
+    {
+      "id": "sedan-medio",
+      "nome": "Sedã médio",
+      "arquivo": "modelos/sedan-medio.glb",
+      "comprimento": 4.8,
+      "giro": 0,
+      "upZ": false,
+      "ativo": true,
+      "auto": true,
+      "versao": 1,
+      "descricao": "Sedã médio genérico, para vagas comuns e de recarga",
+      "credito": {
+        "titulo": "Generic Sedan Car",
+        "autor": "Márcio Meireles (MMC Works)",
+        "fonte": "https://sketchfab.com/3d-models/generic-sedan-car-58c33766470d46e7b2aed542650494e5",
+        "licenca": "CC BY 4.0",
+        "licencaUrl": "https://creativecommons.org/licenses/by/4.0/",
+        "alteracoes": "texturas recomprimidas e rodas da frente alinhadas"
+      }
+    },
+    {
+      "id": "sedan-eletrico",
+      "nome": "Sedã elétrico",
+      "arquivo": "modelos/sedan-eletrico.glb",
+      "comprimento": 4.95,
+      "giro": 0,
+      "upZ": false,
+      "ativo": true,
+      "auto": true,
+      "versao": 1,
+      "descricao": "Sedã elétrico genérico de linhas modernas",
+      "credito": {
+        "titulo": "Generic Electric sedan vector",
+        "autor": "Antonis_zks",
+        "fonte": "https://sketchfab.com/3d-models/generic-electric-sedan-vector-95f32d0d23bf4db48b1b28843385685f",
+        "licenca": "CC BY 4.0",
+        "licencaUrl": "https://creativecommons.org/licenses/by/4.0/"
+      }
+    }
+  ]
 }

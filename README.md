@@ -14,13 +14,17 @@ Se o repositório tiver outro nome, troque `CATALOGO_URL` no `index.html`.
 
 ## Repositório
 
-O repositório é [viniciusmorsch-eng/elettra-veiculos](https://github.com/viniciusmorsch-eng/elettra-veiculos), público, com o GitHub Pages publicando a branch `main`, pasta `/ (root)` (**Settings → Pages**). Ele tem o `catalogo.json`, o `.nojekyll` (só a presença dele conta: com ele, o Pages publica os arquivos como estão), este README e a pasta `modelos/` para os arquivos dos carros. A pasta `catalogo-veiculos` do projeto da Elettra guarda uma cópia deste conteúdo.
+O repositório é [viniciusmorsch-eng/elettra-veiculos](https://github.com/viniciusmorsch-eng/elettra-veiculos), público, com o GitHub Pages publicando a branch `main`, pasta `/ (root)` (**Settings → Pages**). Ele tem o `catalogo.json`, o `.nojekyll` (só a presença dele conta: com ele, o Pages publica os arquivos como estão), este README, a ferramenta `reduz-glb.html` e a pasta `modelos/` para os arquivos dos carros. A pasta `catalogo-veiculos` do projeto da Elettra guarda uma cópia deste conteúdo.
+
+**Atenção**: os carros vão para **este** repositório (`elettra-veiculos`), não para o da Elettra. A Elettra só lê a lista publicada daqui; o que for posto na pasta `catalogo-veiculos` do projeto da Elettra serve só para testar com `?catalogo=local`.
 
 ## Pôr um carro novo
 
 Dá para fazer tudo pelo site do GitHub, sem instalar nada:
 
-1. No repositório, abra a pasta `modelos/`, clique em **Add file → Upload files**, arraste o `.glb` do carro e confirme em **Commit changes**. Use GLB com tudo embutido: texturas dentro do arquivo, de preferência com até 15 MB (o site aceita até 25 MB por arquivo). Use só modelos com licença de uso; carros de montadoras, só com autorização. O repositório é público: qualquer pessoa pode baixar os arquivos.
+1. No repositório, abra a pasta `modelos/`, clique em **Add file → Upload files**, arraste o `.glb` do carro e confirme em **Commit changes**. Use GLB com tudo embutido: texturas dentro do arquivo, de preferência com até 15 MB (o site aceita até 25 MB por arquivo). Arquivo maior: reduza as texturas antes em [reduz-glb.html](https://viniciusmorsch-eng.github.io/elettra-veiculos/reduz-glb.html) (roda no navegador, o arquivo não sai do computador).
+
+   **Licença**: o repositório é público (qualquer pessoa baixa os arquivos) e a Elettra é um produto comercial, então o modelo precisa permitir uso comercial e redistribuição: **CC0** ou **CC BY** (com o crédito no campo `credito`). Licenças **NC** (não comercial), **ND** (sem alterações), a "Standard" do Sketchfab e modelos comprados para uso próprio não servem. Nada de carros de montadoras: use modelos genéricos, sem marca.
 2. Abra o `catalogo.json`, clique no lápis (**Edit this file**), acrescente o carro na lista `veiculos` e confirme em **Commit changes**. Entre um carro e outro vai uma vírgula:
 
 ```json
@@ -37,7 +41,14 @@ Dá para fazer tudo pelo site do GitHub, sem instalar nada:
       "ativo": true,
       "auto": true,
       "versao": 1,
-      "descricao": "Sedã médio, para vagas comuns e de recarga"
+      "descricao": "Sedã médio, para vagas comuns e de recarga",
+      "credito": {
+        "titulo": "Generic Sedan Car",
+        "autor": "MMC Works",
+        "fonte": "https://sketchfab.com/3d-models/generic-sedan-car-58c33766470d46e7b2aed542650494e5",
+        "licenca": "CC BY 4.0",
+        "licencaUrl": "https://creativecommons.org/licenses/by/4.0/"
+      }
     }
   ]
 }
@@ -59,6 +70,7 @@ Dá para fazer tudo pelo site do GitHub, sem instalar nada:
 | `auto` | `false` deixa o carro fora do automático: ele só aparece quando escolhido. |
 | `versao` | Troque o número quando substituir o arquivo `.glb`, para os navegadores baixarem o novo. |
 | `descricao` | Texto curto opcional, mostrado na Biblioteca 3D. |
+| `credito` | Crédito do modelo 3D, mostrado no cartão do carro: `titulo` (nome original), `autor`, `fonte` (página do modelo), `licenca` (ex.: `CC BY 4.0`), `licencaUrl` e `alteracoes` (o que foi mudado no arquivo original, como texturas reduzidas — a CC BY pede que as alterações sejam indicadas). **Obrigatório nos modelos CC BY**; no CC0 é opcional. |
 
 Se você apagar um carro da lista, os veículos que usavam esse carro passam a mostrar o modelo genérico.
 

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reduzir GLB</title>
+<style>
+:root{--bg:#F3F6F7;--card:#fff;--ink:#152A35;--mute:#5B6B74;--line:#D5DEE2;--brand:#00D49A;--brand-ink:#071B26;--error:#E45E5E;--accent:#008A64}
+@media (prefers-color-scheme:dark){:root{--bg:#071B26;--card:#0E2733;--ink:#E8EEF0;--mute:#9DB0B8;--line:#253F4C;--error:#F08080;--accent:#00D49A}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:22px;margin:0 0 4px}
+p{margin:6px 0}
+.mute{color:var(--mute);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:16px}
+label{display:block;font-size:13px;color:var(--mute);margin-bottom:4px}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.row>div{min-width:150px}
+select,input[type=file]{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;max-width:100%}
+button,a.btn{font:600 14px system-ui,sans-serif;background:var(--brand);color:var(--brand-ink);border:0;border-radius:6px;padding:9px 16px;cursor:pointer;text-decoration:none;display:inline-block}
+button:disabled{opacity:.5;cursor:default}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+td,th{text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.erro{color:var(--error)}
+.ok{color:var(--accent);font-weight:600}
+</style>
+</head>
+<body>
+<main>
+  <h1>Reduzir GLB para o catálogo</h1>
+  <p class="mute">Diminui as texturas de um carro em GLB para caber no envio pelo site do GitHub (até 25 MB por arquivo; o ideal é até 15 MB). Tudo roda neste navegador: o arquivo não sai do computador. A malha, os materiais e os nomes das peças (usados para achar as rodas) ficam como estão.</p>
+  <div class="card">
+    <div class="row">
+      <div><label for="arq">Arquivo .glb</label><input type="file" id="arq" accept=".glb,model/gltf-binary"></div>
+      <div><label for="max">Maior lado das texturas</label><select id="max"><option value="4096">4096 px</option><option value="2048" selected>2048 px</option><option value="1024">1024 px</option><option value="512">512 px</option></select></div>
+      <div><label for="q">Qualidade do JPEG</label><select id="q"><option value="0.92">Alta (92%)</option><option value="0.85" selected>Boa (85%)</option><option value="0.75">Média (75%)</option></select></div>
+      <div><button id="vai" disabled>Reduzir</button></div>
+    </div>
+    <p class="mute">Texturas com transparência continuam em PNG; as outras viram JPEG. Uma textura só é trocada quando a nova fica menor.</p>
+  </div>
+  <div class="card" id="res" hidden></div>
+</main>
+<script>
+// GLB = cabeçalho de 12 bytes + bloco JSON + bloco BIN. As imagens ficam em bufferViews do BIN; aqui cada imagem PNG/JPEG é
+// redesenhada num canvas no tamanho pedido e o BIN é remontado com as mesmas bufferViews (alinhadas a 4 bytes).
+const $=id=>document.getElementById(id),MB=b=>(b/1048576).toLocaleString('pt-BR',{maximumFractionDigits:1})+' MB';
+function lerGlb(ab){
+  const dv=new DataView(ab);
+  if(dv.getUint32(0,true)!==0x46546C67||dv.getUint32(4,true)!==2)throw new Error('Não é um GLB versão 2.');
+  let p=12,json=null,bin=null;
+  while(p<ab.byteLength){const n=dv.getUint32(p,true),t=dv.getUint32(p+4,true);
+    if(t===0x4E4F534A)json=JSON.parse(new TextDecoder().decode(new Uint8Array(ab,p+8,n)));else if(t===0x004E4942)bin=new Uint8Array(ab,p+8,n);p+=8+n;}
+  if(!json)throw new Error('GLB sem o bloco JSON.');
+  if((json.buffers||[]).length>1||(json.buffers||[]).some(b=>b.uri))throw new Error('O GLB aponta para arquivos externos: exporte com tudo embutido.');
+  return {json,bin:bin||new Uint8Array(0)};}
+function montaGlb(json,bin){
+  const enc=new TextEncoder();let js=enc.encode(JSON.stringify(json));const pj=(4-js.length%4)%4,pb=(4-bin.length%4)%4;
+  const tot=12+8+js.length+pj+(bin.length?8+bin.length+pb:0),out=new Uint8Array(tot),dv=new DataView(out.buffer);
+  dv.setUint32(0,0x46546C67,true);dv.setUint32(4,2,true);dv.setUint32(8,tot,true);
+  dv.setUint32(12,js.length+pj,true);dv.setUint32(16,0x4E4F534A,true);out.set(js,20);out.fill(0x20,20+js.length,20+js.length+pj);
+  if(bin.length){const o=20+js.length+pj;dv.setUint32(o,bin.length+pb,true);dv.setUint32(o+4,0x004E4942,true);out.set(bin,o+8);}
+  return out;}
+async function recodifica(bytes,mime,max,q){
+  const bmp=await createImageBitmap(new Blob([bytes],{type:mime}));
+  const k=Math.min(1,max/Math.max(bmp.width,bmp.height)),w=Math.max(1,Math.round(bmp.width*k)),h=Math.max(1,Math.round(bmp.height*k));
+  const cv=document.createElement('canvas');cv.width=bmp.width;cv.height=bmp.height;const cx=cv.getContext('2d',{willReadFrequently:true});cx.drawImage(bmp,0,0);
+  // transparência: algum pixel com alfa abaixo de 250 (amostra de até ~250 mil pixels)
+  let alfa=false;if(mime==='image/png'){const d=cx.getImageData(0,0,bmp.width,bmp.height).data,passo=Math.max(1,Math.floor(d.length/4/250000))*4;for(let i=3;i<d.length;i+=passo)if(d[i]<250){alfa=true;break;}}
+  let cv2=cv;if(w!==bmp.width||h!==bmp.height){cv2=document.createElement('canvas');cv2.width=w;cv2.height=h;const c2=cv2.getContext('2d');c2.imageSmoothingQuality='high';c2.drawImage(bmp,0,0,w,h);}
+  bmp.close&&bmp.close();
+  const tipo=alfa?'image/png':'image/jpeg',blob=await new Promise(r=>cv2.toBlob(r,tipo,q));
+  return {bytes:new Uint8Array(await blob.arrayBuffer()),mime:tipo,w0:cv.width,h0:cv.height,w,h};}
+async function reduz(ab,max,q,aviso){
+  const {json,bin}=lerGlb(ab),bvs=json.bufferViews||[],novo=new Map(),linhas=[];
+  for(let i=0;i<(json.images||[]).length;i++){const im=json.images[i];
+    if(im.bufferView==null||!/^image\/(png|jpeg)$/.test(im.mimeType||'')){linhas.push({nome:im.name||('imagem '+i),obs:'mantida (formato '+(im.mimeType||im.uri||'?')+')'});continue;}
+    const bv=bvs[im.bufferView],b=bin.subarray(bv.byteOffset||0,(bv.byteOffset||0)+bv.byteLength);
+    aviso('Texturas: '+(i+1)+' de '+json.images.length+'…');
+    try{const r=await recodifica(b,im.mimeType,max,q);
+      if(r.bytes.length<b.length){novo.set(im.bufferView,r.bytes);im.mimeType=r.mime;}
+      linhas.push({nome:im.name||('imagem '+i),antes:b.length,depois:Math.min(b.length,r.bytes.length),med:`${r.w0}×${r.h0}`+(r.bytes.length<b.length?` → ${r.w}×${r.h} ${r.mime==='image/png'?'PNG':'JPEG'}`:' (mantida)')});}
+    catch(e){linhas.push({nome:im.name||('imagem '+i),obs:'mantida (não foi possível ler)'});}}
+  // BIN remontado na ordem das bufferViews
+  let tam=0;const pos=bvs.map((bv,j)=>{const n=novo.has(j)?novo.get(j).length:bv.byteLength,o=tam;tam+=n;tam+=(4-tam%4)%4;return o;});
+  const out=new Uint8Array(tam);
+  bvs.forEach((bv,j)=>{const src=novo.get(j)||bin.subarray(bv.byteOffset||0,(bv.byteOffset||0)+bv.byteLength);out.set(src,pos[j]);bv.byteOffset=pos[j];bv.byteLength=src.length;});
+  if(json.buffers&&json.buffers[0])json.buffers[0].byteLength=out.length;
+  return {glb:montaGlb(json,out),linhas};}
+function mostra(nome,antes,r){
+  const blob=new Blob([r.glb],{type:'model/gltf-binary'}),url=URL.createObjectURL(blob),saida=nome.replace(/\.glb$/i,'')+'-reduzido.glb',d=r.glb.length;
+  $('res').hidden=false;
+  $('res').innerHTML=`<p><span class="ok">${MB(antes)} → ${MB(d)}</span> ${d>25*1048576?'<span class="erro">· ainda acima de 25 MB: tente texturas menores</span>':d>15*1048576?'· cabe no site do GitHub (acima dos 15 MB ideais)':'· pronto para o catálogo'}</p>
+    <p><a class="btn" href="${url}" download="${saida}">Baixar ${saida}</a></p>
+    <table><tr><th>Textura</th><th>Medida</th><th class="n">Antes</th><th class="n">Depois</th></tr>${r.linhas.map(l=>`<tr><td>${String(l.nome).replace(/</g,'&lt;')}</td><td>${l.med||l.obs}</td><td class="n">${l.antes?MB(l.antes):''}</td><td class="n">${l.depois?MB(l.depois):''}</td></tr>`).join('')}</table>`;
+  return {blob,antes,depois:d};}
+$('arq').addEventListener('change',()=>{$('vai').disabled=!$('arq').files.length;});
+$('vai').addEventListener('click',async()=>{
+  const f=$('arq').files[0];if(!f)return;$('vai').disabled=true;$('res').hidden=false;
+  try{const r=await reduz(await f.arrayBuffer(),+$('max').value,+$('q').value,t=>{$('res').textContent=t;});mostra(f.name,f.size,r);}
+  catch(e){$('res').innerHTML=`<p class="erro">${String(e.message||e).replace(/</g,'&lt;')}</p>`;}
+  $('vai').disabled=false;});
+// uso automático (pasta servida por http): ?src=modelos/x.glb&max=2048&q=0.85&envia=/salva?nome=x.glb
+(async()=>{const s=new URLSearchParams(location.search),src=s.get('src');if(!src)return;
+  const pre=document.createElement('pre');pre.id='saida';document.body.appendChild(pre);
+  try{const ab=await (await fetch(src)).arrayBuffer(),r=await reduz(ab,+(s.get('max')||2048),+(s.get('q')||0.85),t=>{pre.textContent=t;});
+    const m=mostra(src.split('/').pop(),ab.byteLength,r);let envio='';
+    if(s.get('envia')){const resp=await fetch(s.get('envia'),{method:'POST',body:m.blob});envio=resp.ok?'enviado':'erro '+resp.status;}
+    pre.textContent=JSON.stringify({antes:m.antes,depois:m.depois,envio,linhas:r.linhas});}
+  catch(e){pre.textContent=JSON.stringify({erro:String(e.message||e)});}})();
+</script>
+</body>
+</html>
