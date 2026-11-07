@@ -39,6 +39,63 @@
         "licenca": "CC BY 4.0",
         "licencaUrl": "https://creativecommons.org/licenses/by/4.0/"
       }
+    },
+    {
+      "id": "suv-eletrico",
+      "nome": "SUV elétrico",
+      "arquivo": "modelos/suv-eletrico.glb",
+      "comprimento": 4.7,
+      "giro": 0,
+      "upZ": false,
+      "ativo": true,
+      "auto": true,
+      "versao": 1,
+      "descricao": "SUV elétrico de linhas retas, com barra de luz na frente",
+      "credito": {
+        "titulo": "Concept car",
+        "autor": "LagzDesign",
+        "fonte": "https://sketchfab.com/3d-models/concept-car-a4a27b16a57240fa818da3c6750d9cca",
+        "licenca": "CC BY 4.0",
+        "licencaUrl": "https://creativecommons.org/licenses/by/4.0/"
+      }
+    },
+    {
+      "id": "cupe-eletrico",
+      "nome": "Cupê elétrico",
+      "arquivo": "modelos/cupe-eletrico.glb",
+      "comprimento": 4.9,
+      "giro": 0,
+      "upZ": false,
+      "ativo": true,
+      "auto": true,
+      "versao": 1,
+      "descricao": "Cupê elétrico baixo e aerodinâmico, com rodas fechadas",
+      "credito": {
+        "titulo": "Luxury concept car",
+        "autor": "LagzDesign",
+        "fonte": "https://sketchfab.com/3d-models/luxury-concept-car-0fb25698ba834ffa833c1049c50b7c24",
+        "licenca": "CC BY 4.0",
+        "licencaUrl": "https://creativecommons.org/licenses/by/4.0/"
+      }
+    },
+    {
+      "id": "crossover-eletrico",
+      "nome": "Crossover elétrico",
+      "arquivo": "modelos/crossover-eletrico.glb",
+      "comprimento": 4.5,
+      "giro": 0,
+      "upZ": false,
+      "ativo": true,
+      "auto": true,
+      "versao": 1,
+      "descricao": "Crossover elétrico de traseira caída",
+      "credito": {
+        "titulo": "Coupe SUV Concept",
+        "autor": "gamers_universe",
+        "fonte": "https://sketchfab.com/3d-models/coupe-suv-concept-480f7396275349939cb1c9c4a5093e86",
+        "licenca": "CC BY 4.0",
+        "licencaUrl": "https://creativecommons.org/licenses/by/4.0/"
+      }
     }
   ]
 }
